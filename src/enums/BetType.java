@@ -13,5 +13,6 @@ public enum BetType {
     SINGLE_COLOR    ,   // Wins if both balls land in the same chosen color.
     DOUBLE_WIN      ,   // Wins if both balls land in the two specified colors, in any order.
     COLOR_SEQUENCE  ,   // Wins if both balls land in the specified colors in the exact order.
-    LUCKY_BLACK     ;   // ToDo Add explanation
+    LUCKY_BLACK     ,   // TODO Add explanation
+
 }

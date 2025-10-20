@@ -1,23 +1,23 @@
-package logic;
-
-// Single round of the game
-// Accepts bets, spins wheel, launches balls, calculates payouts
+package models.bets;
 
 // ▶ Imports ────────────────────────────────────────────────────────────────────────────────────────────────────
+import models.Player;
+import models.Pocket;
 
-
-/*
-PENDING
-private boolean isTurn;
- */
-
-public class GameRound {
+public class ColorSequenceBet extends Bet {
     // ▶ Attributes ─────────────────────────────────────────────────────────────────────────────────────────────
 
     // ▶ Constructors ───────────────────────────────────────────────────────────────────────────────────────────
+    public ColorSequenceBet(Player player, double amount) {
+        super(player, amount);
+    }
 
     // ▶ Getters ────────────────────────────────────────────────────────────────────────────────────────────────
 
     // ▶ Methods ────────────────────────────────────────────────────────────────────────────────────────────────
+    @Override
+    public double calculatePayout(Pocket[] results) {
+        return 0;
+    }
 
 }

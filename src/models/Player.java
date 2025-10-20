@@ -4,6 +4,8 @@ package models;
 // Has balance, can place bets, and receives winnings/losses
 
 // ▶ Imports ────────────────────────────────────────────────────────────────────────────────────────────────────
+import models.bets.Bet;
+
 import java.util.ArrayList;
 import java.util.List;
 
