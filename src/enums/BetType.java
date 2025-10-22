@@ -4,7 +4,7 @@ public enum BetType {
 
     // THE CLASSICS
     NUMBER          ,   // Bet on an exact number.
-    PARITY          ,   // Bet on parity: EVEN or ODD.
+    PARITY          ,   // Bet on parity: EVEN or ODD. (only one bet)
     STREET          ,   // Bet on a street (three consecutive numbers).
     DOZEN           ,   // Bet on a dozen (range of 12 numbers).
 
