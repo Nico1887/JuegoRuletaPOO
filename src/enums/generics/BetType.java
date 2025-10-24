@@ -1,4 +1,4 @@
-package enums;
+package enums.generics;
 
 public enum BetType {
 
