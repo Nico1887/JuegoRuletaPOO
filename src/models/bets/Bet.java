@@ -1,7 +1,8 @@
 package models.bets;
 
-// Bet made by a player
-// Has type, chosen value, and wagered amount
+// ▶ ────────────────────────────────────────────────────────────────────────────────────────────────────────────
+// Bet made by a player. Has type, chosen value, and wagered amount.
+// ▶ ────────────────────────────────────────────────────────────────────────────────────────────────────────────
 
 // ▶ Imports ────────────────────────────────────────────────────────────────────────────────────────────────────
 import enums.generics.BetType;
@@ -11,6 +12,7 @@ import models.Player    ;
 import models.Pocket    ;
 
 public abstract class Bet<T> {
+
     // ▶ Attributes ─────────────────────────────────────────────────────────────────────────────────────────────
 
     // ▶ Static
