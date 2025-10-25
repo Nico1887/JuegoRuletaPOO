@@ -10,7 +10,6 @@ import logic.PayoutCalculator;
 import logic.GameRound;
 import javax.swing.*;
 import java.awt.*;
-import java.util.Hashtable;
 
 public class GameGUI extends JFrame {
     // ▶ Attributes ─────────────────────────────────────────────────────────────────────────────────────────────
@@ -32,13 +31,15 @@ public class GameGUI extends JFrame {
         this.gameRound = new GameRound(gameTable, payoutCalculator);
         this.board = new Board(gameTable);
 
+        // --- BACKGROUND IMAGE PATH (Updated to img.png) ---
+        final String BACKGROUND_IMAGE_PATH = "/resources/img.png";
+
         setTitle("Rainbow Roulette 2-Balls");
         setSize(1300, 950);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
-        // Contenedor principal
-        JPanel contentPanel = new JPanel(new BorderLayout(10, 10));
-        contentPanel.setBackground(new java.awt.Color(60, 63, 65));
+        // Uses FondoPanel as the main content container
+        FondoPanel contentPanel = new FondoPanel(BACKGROUND_IMAGE_PATH);
 
         lblBalance = new JLabel("Balance: $" + String.format("%.2f", player.getBalance()));
         lblBalance.setForeground(java.awt.Color.WHITE);
@@ -53,10 +54,11 @@ public class GameGUI extends JFrame {
 
         // --- Setting up Layout ---
         JPanel pnlBoard = new JPanel(new BorderLayout());
-        pnlBoard.setOpaque(false);
+        pnlBoard.setOpaque(false); // Transparent to show background
         pnlBoard.add(board, BorderLayout.CENTER);
 
         JPanel pnlControls = createControlsPanel();
+        pnlControls.setOpaque(false); // Transparent
 
         contentPanel.add(pnlBoard, BorderLayout.CENTER);
         contentPanel.add(pnlControls, BorderLayout.EAST);
@@ -70,17 +72,17 @@ public class GameGUI extends JFrame {
     /** Creates the vertical panel for controls, optimized for legibility. */
     private JPanel createControlsPanel() {
         JPanel pnlControls = new JPanel(new BorderLayout(10, 10));
-        pnlControls.setOpaque(false);
+        pnlControls.setOpaque(false); // Ensures background is visible
         pnlControls.setBorder(BorderFactory.createEmptyBorder(20, 15, 20, 15));
 
-        // Panel para los campos de entrada (usando BoxLayout para apilamiento)
+        // Panel for input fields
         JPanel pnlInputFields = new JPanel();
         pnlInputFields.setOpaque(false);
         pnlInputFields.setLayout(new BoxLayout(pnlInputFields, BoxLayout.Y_AXIS));
         pnlInputFields.setBorder(BorderFactory.createEmptyBorder(0, 0, 20, 0));
 
 
-        // 1. BALANCE (Separado y arriba)
+        // 1. BALANCE
         lblBalance.setFont(new Font("Arial", Font.BOLD, 14));
         JPanel pnlBalance = createRowPanel();
         pnlBalance.setLayout(new FlowLayout(FlowLayout.LEFT, 0, 0));
@@ -95,15 +97,15 @@ public class GameGUI extends JFrame {
 
         Font labelFont = new Font("Arial", Font.PLAIN, 12);
 
-        // Fila 1: Type
+        // Row 1: Type
         pnlGrid.add(createLabel("Type:", labelFont));
         pnlGrid.add(cmbBetType);
 
-        // Fila 2: Stake
+        // Row 2: Stake
         pnlGrid.add(createLabel("Stake: $", labelFont));
         pnlGrid.add(txtStakeAmount);
 
-        // Fila 3: Value
+        // Row 3: Value
         pnlGrid.add(createLabel("Value (e.g., Red):", labelFont));
         pnlGrid.add(txtBetValue);
 
@@ -111,18 +113,17 @@ public class GameGUI extends JFrame {
         pnlInputFields.add(Box.createVerticalStrut(20));
 
 
-        // 3. SPIN BUTTON (Alineado a la derecha)
+        // 3. SPIN BUTTON (Right aligned)
         JPanel pnlButton = createRowPanel();
         pnlButton.setLayout(new FlowLayout(FlowLayout.RIGHT, 0, 0));
         pnlButton.add(btnSpin);
         pnlInputFields.add(pnlButton);
 
-        // Añadir el panel de entrada al NORTE del panel de controles principal
         pnlControls.add(pnlInputFields, BorderLayout.NORTH);
         pnlControls.add(Box.createVerticalGlue(), BorderLayout.CENTER);
 
 
-        // 4. HISTORY AND RESULTS (Sur)
+        // 4. HISTORY AND RESULTS (South)
         JPanel pnlHistory = new JPanel(new BorderLayout(0, 5));
         pnlHistory.setOpaque(false);
         JLabel lblHistory = createLabel("History and Results:", labelFont);
@@ -135,10 +136,10 @@ public class GameGUI extends JFrame {
         return pnlControls;
     }
 
-    // Auxiliary method for creating clean rows
+    // Auxiliary method for creating transparent rows
     private JPanel createRowPanel() {
         JPanel p = new JPanel();
-        p.setOpaque(false);
+        p.setOpaque(false); // Critical: Transparent
         p.setMaximumSize(new Dimension(Integer.MAX_VALUE, p.getPreferredSize().height));
         return p;
     }
