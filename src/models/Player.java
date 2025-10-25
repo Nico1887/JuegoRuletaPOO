@@ -1,82 +1,91 @@
 package models;
 
-// Player in Rainbow Roulette
-// Has balance, can place bets, and receives winnings/losses
-
-// ▶ Imports ────────────────────────────────────────────────────────────────────────────────────────────────────
 import models.bets.Bet;
+import exceptions.InsufficientBalanceException;
 
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Represents a player in the Rainbow Roulette game.
+ * Manages balance and current bets.
+ */
 public class Player {
     // ▶ Attributes ─────────────────────────────────────────────────────────────────────────────────────────────
     private final String username;
-    private double balance;         // Money
+    private double balance;         // Player's money balance
     private List<Bet> currentBets;
 
     // ▶ Optional (Do not delete) ───────────────────────────────────────────────────────────────────────────────
-    private double winningsThisRound;
+    private double winningsThisRound; // Accumulated winnings from the current spin
 
     // ▶ Constructors ───────────────────────────────────────────────────────────────────────────────────────────
     public Player(String username, double balance) {
         this.username = username;
         this.balance = balance;
-        this.currentBets = new ArrayList<>();   // Starts empty.
-
-        // ▶ Optional (Do not delete)
-        this.winningsThisRound = 0.0;           // Starts at 0.
+        this.currentBets = new ArrayList<>();
+        this.winningsThisRound = 0.0;
     }
 
     // ▶ Getters ────────────────────────────────────────────────────────────────────────────────────────────────
-    public String getUsername() {
-        return username;
-    }
-    public double getBalance() {
-        return balance;
-    }
+    public String getUsername() { return username; }
+    public double getBalance() { return balance; }
     public List<Bet> getCurrentBets() {
-        // Returns a copy, so no one can modify the original:
         return new ArrayList<>(currentBets);
     }
-    public double getWinningsThisRound() {
-        return winningsThisRound;
-    }
+    public double getWinningsThisRound() { return winningsThisRound; }
 
     // ▶ Methods ────────────────────────────────────────────────────────────────────────────────────────────────
 
-    // ▶ Balance:
+    /** Adds the specified amount to the player's balance. */
     public double addBalance(double amount) {
-
-        return 0.0;
+        this.balance += amount;
+        return this.balance;
     }
+
+    /** Deducts the specified amount from the balance, checking for sufficiency. */
     public double deductBalance(double amount) {
-
-        return 0.0;
+        if (amount > this.balance) {
+            throw new InsufficientBalanceException("Insufficient balance.");
+        }
+        this.balance -= amount;
+        return this.balance;
     }
 
-    // ▶ Bets:
+    /** Adds a bet to the player's current list of wagers. */
     public void addBet(Bet bet) {
         currentBets.add(bet);
     }
+
+    /** Clears all current bets after a round. */
     public void clearBets() {
         currentBets.clear();
     }
 
-    // ▶ Winnings
-    public void addWinnings() {
-
+    /** Accumulates net winnings from a single bet. */
+    public void addWinnings(double amount) {
+        this.winningsThisRound += amount;
     }
+
+    /** Settles the total winnings of the round into the main balance. */
+    public void addWinnings() {
+        this.balance += this.winningsThisRound;
+        clearWinnings();
+    }
+
+    /** Resets the round's accumulated winnings to zero. */
     public void clearWinnings() {
         this.winningsThisRound = 0.0;
     }
 
-    // ▶ Reset
+    /** Prepares the player for a new betting round. */
     public void resetForNewRound() {
-
+        clearBets();
+        clearWinnings();
     }
 
     // ▶ ToString ───────────────────────────────────────────────────────────────────────────────────────────────
+    @Override
     public String toString() {
         return "Player{" +
                 "username='" + username + '\'' +
@@ -85,6 +94,4 @@ public class Player {
                 ", winningsThisRound=" + winningsThisRound +
                 '}';
     }
-
 }
-
