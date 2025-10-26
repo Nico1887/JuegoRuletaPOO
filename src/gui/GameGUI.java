@@ -8,6 +8,7 @@ import models.bets.Bet;
 import models.bets.GenericBet;
 import logic.PayoutCalculator;
 import logic.GameRound;
+import logic.SoundManager;
 import javax.swing.*;
 import java.awt.*;
 
@@ -31,7 +32,7 @@ public class GameGUI extends JFrame {
         this.gameRound = new GameRound(gameTable, payoutCalculator);
         this.board = new Board(gameTable);
 
-        // --- BACKGROUND IMAGE PATH (Updated to img.png) ---
+        // --- BACKGROUND IMAGE PATH (Assuming img.png is the final filename) ---
         final String BACKGROUND_IMAGE_PATH = "/resources/img.png";
 
         setTitle("Rainbow Roulette 2-Balls");
@@ -40,6 +41,9 @@ public class GameGUI extends JFrame {
 
         // Uses FondoPanel as the main content container
         FondoPanel contentPanel = new FondoPanel(BACKGROUND_IMAGE_PATH);
+
+        // START AMBIENT MUSIC LOOP
+        SoundManager.playAmbientLoop();
 
         lblBalance = new JLabel("Balance: $" + String.format("%.2f", player.getBalance()));
         lblBalance.setForeground(java.awt.Color.WHITE);
@@ -220,12 +224,18 @@ public class GameGUI extends JFrame {
             player.addBet(bet);
 
             updateBalance();
+
+            // START SPIN SOUND
+            SoundManager.playSpinStart();
+
             board.startSpin();
 
             Timer checkTimer = new Timer(500, null);
             checkTimer.addActionListener(e -> {
                 if (board.isWheelStopped() && board.isBall1Stopped() && board.isBall2Stopped()) {
                     checkTimer.stop();
+                    // STOP SPIN SOUND
+                    SoundManager.stopSpin();
                     processSpinFinished(board.getResults());
                 }
             });
@@ -233,9 +243,11 @@ public class GameGUI extends JFrame {
 
         } catch (NumberFormatException | InvalidBetTypeException | NullStakeException ex) {
             showMessage("Input Error", "Input error: " + ex.getMessage(), JOptionPane.ERROR_MESSAGE);
+            SoundManager.playLose();
             btnSpin.setEnabled(true);
         } catch (InsufficientBalanceException ex) {
             showMessage("Balance Error", ex.getMessage(), JOptionPane.ERROR_MESSAGE);
+            SoundManager.playLose();
             btnSpin.setEnabled(true);
         }
     }
@@ -247,10 +259,21 @@ public class GameGUI extends JFrame {
 
             Bet lastBet = player.getCurrentBets().isEmpty() ? null : player.getCurrentBets().get(0);
 
+            // Get total accumulated winnings (including returned stake)
+            double totalWinnings = player.getWinningsThisRound();
+
             if (lastBet != null) {
-                txtResults.append(generateResultMessage(lastBet, results, player.getWinningsThisRound()) + "\n");
+                // Sound condition: Play WIN only if there is a net gain (total winnings > original stake).
+                if (totalWinnings > lastBet.getAmount()) {
+                    SoundManager.playWin();
+                } else {
+                    SoundManager.playLose(); // Lose, draw, or just getting stake back
+                }
+
+                txtResults.append(generateResultMessage(lastBet, results, totalWinnings) + "\n");
             } else {
                 txtResults.append("Spin: " + results[0].getNumber() + " | " + results[1].getNumber() + ".\n");
+                SoundManager.playLose();
             }
 
             updateBalance();
