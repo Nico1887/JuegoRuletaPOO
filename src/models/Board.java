@@ -1,6 +1,5 @@
 package models;
 
-// CORREGIDO: Solo usamos ColorStake, que es la fuente real de color.
 import enums.stakes.ColorStake;
 import javax.swing.*;
 import java.awt.*;
@@ -25,20 +24,17 @@ public class Board extends JPanel {
     private double ball1TargetAngle;
     private double ball2TargetAngle;
 
-    // Physics and Calibration Constants
+    // Physics and Calibration Constants (AJUSTADOS: RUEDA SE DETIENE PRIMERO)
     private final double BASE_WHEEL_VELOCITY = 30.0;
-    private final double WHEEL_FRICTION = 0.990;
-    private final double BALL_FRICTION = 0.995;
+    private final double WHEEL_FRICTION = 0.965;
+    private final double BALL_FRICTION = 0.985;
     private final double VELOCITY_THRESHOLD = 0.01;
 
     private final double POINTER_ANGLE = 90.0; // Top center reference angle
-    private final double POCKET_ZERO_START_ANGLE = 90.0;
 
-    // Visual Constants
-    private final int BALL_SIZE = 16;
+    private final int BALL_SIZE = 24;
     private final int HALF_BALL_SIZE = BALL_SIZE / 2;
 
-    // CORREGIDO: La clave es ColorStake. No hay enum Color.
     private static final Map<ColorStake, java.awt.Color> COLOR_MAP = new HashMap<>();
 
     private final java.awt.Color WOOD_DARK = new java.awt.Color(70, 35, 0);
@@ -48,7 +44,7 @@ public class Board extends JPanel {
     private final java.awt.Color METAL_HIGHLIGHT = new java.awt.Color(230, 230, 230);
 
     static {
-        // Colores mapeados directamente desde ColorStake.
+        // Colores mapeados desde ColorStake.
         COLOR_MAP.put(ColorStake.RED, new java.awt.Color(220, 20, 60));
         COLOR_MAP.put(ColorStake.ORANGE, new java.awt.Color(170, 75, 0));
         COLOR_MAP.put(ColorStake.YELLOW, new java.awt.Color(255, 215, 0));
@@ -115,7 +111,7 @@ public class Board extends JPanel {
 
         // 2. CALCULATE TOTAL BRAKING DISTANCE AND WHEEL CALIBRATION
         double totalBaseAngle = calculateTotalAngle(-BASE_WHEEL_VELOCITY, WHEEL_FRICTION);
-        int numTurns = 5 + (int)(Math.random() * 3);
+        int numTurns = 3 + (int)(Math.random() * 2);
         double totalTargetAngle = -numTurns * 360.0; // Negative for anti-clockwise spin
 
         // 3. FINAL ABSOLUTE TARGET POSITIONS (Balls)
@@ -139,6 +135,11 @@ public class Board extends JPanel {
 
         double totalBallDistance1 = totalTargetAngle + distanceBall1;
         double totalBallDistance2 = totalTargetAngle + distanceBall2;
+
+        // Aseguramos que la bola gire al menos una vuelta más que la rueda.
+        double extraTurns = 1.0;
+        totalBallDistance1 += extraTurns * 360.0;
+        totalBallDistance2 += extraTurns * 360.0;
 
         ball1Velocity = calculateInitialVelocity(totalBallDistance1, BALL_FRICTION);
         ball2Velocity = calculateInitialVelocity(totalBallDistance2, BALL_FRICTION);
@@ -274,7 +275,7 @@ public class Board extends JPanel {
             int textY = (int) (centerY - Math.sin(textAngle) * textRadius);
             String text = String.valueOf(p.getNumber());
 
-            g2dWheel.setFont(new Font("Arial", Font.BOLD, 22));
+            g2dWheel.setFont(new Font("Times New Roman", Font.BOLD, 26));
             g2dWheel.setColor(java.awt.Color.WHITE);
 
             FontMetrics fm = g2dWheel.getFontMetrics();
@@ -309,9 +310,12 @@ public class Board extends JPanel {
         double b1Rad = Math.toRadians(b1Normalized);
         double b2Rad = Math.toRadians(b2Normalized);
 
-        int ballRadiusStop = (segmentInnerRadius + segmentOuterRadius) / 2 + 5;
-        int ballRadius1 = ballRadiusStop - 5;
-        int ballRadius2 = ballRadiusStop + 5;
+        // Posicionamiento de las bolas (mitad interior del segmento, lejos de los números)
+        int segmentMiddleRadius = (segmentInnerRadius + segmentOuterRadius) / 2;
+        int ballRadiusStop = segmentMiddleRadius;
+
+        int ballRadius1 = ballRadiusStop - (BALL_SIZE / 4);
+        int ballRadius2 = ballRadiusStop + (BALL_SIZE / 4);
 
         // Ball 1 (White, smooth)
         int b1X = (int) (centerX + ballRadius1 * Math.cos(b1Rad));
@@ -329,7 +333,7 @@ public class Board extends JPanel {
         if (wheelStopped && ball1Stopped && ball2Stopped) {
             String resStr = results[0].getNumber() + " | " + results[1].getNumber();
             g2d.setColor(java.awt.Color.YELLOW);
-            g2d.setFont(new Font("Arial", Font.BOLD, 24));
+            g2d.setFont(new Font("ARIAL", Font.BOLD, 24));
             FontMetrics fm = g2d.getFontMetrics();
             g2d.drawString(resStr, centerX - fm.stringWidth(resStr) / 2, centerY + 8);
         }
@@ -339,8 +343,6 @@ public class Board extends JPanel {
 
     /** Maps the ColorStake enum to a java.awt.Color for drawing. */
     private java.awt.Color getAWTColor(ColorStake colorStake) {
-        // CORRECTION: Since there is no visual Color enum, we map ColorStake directly.
-        // We eliminate the confusing dependency on a non-existent class.
         return COLOR_MAP.getOrDefault(colorStake, java.awt.Color.GRAY);
     }
 }

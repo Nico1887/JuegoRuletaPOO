@@ -12,19 +12,24 @@ import java.util.List;
  */
 public class Player {
     // ▶ Attributes ─────────────────────────────────────────────────────────────────────────────────────────────
-    private final String username;
-    private double balance;         // Player's money balance
+    private String username;
+    private double balance;
     private List<Bet> currentBets;
 
-    // ▶ Optional (Do not delete) ───────────────────────────────────────────────────────────────────────────────
-    private double winningsThisRound; // Accumulated winnings from the current spin
+    // ▶ Optional ───────────────────────────────────────────────────────────────────────────────
+    private double winningsThisRound;
 
     // ▶ Constructors ───────────────────────────────────────────────────────────────────────────────────────────
+
     public Player(String username, double balance) {
         this.username = username;
         this.balance = balance;
         this.currentBets = new ArrayList<>();
         this.winningsThisRound = 0.0;
+    }
+
+    public Player(String username) {
+        this(username, 1000.0);
     }
 
     // ▶ Getters ────────────────────────────────────────────────────────────────────────────────────────────────
@@ -34,6 +39,21 @@ public class Player {
         return new ArrayList<>(currentBets);
     }
     public double getWinningsThisRound() { return winningsThisRound; }
+
+    // ▶ Setters ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    /**
+     * Sets the player's username. This is necessary for GameGUI to update the name
+     * after prompting the user.
+     * @param username The new username.
+     */
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
+    public void setBalance(double balance) {
+        this.balance = balance;
+    }
 
     // ▶ Methods ────────────────────────────────────────────────────────────────────────────────────────────────
 

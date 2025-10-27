@@ -11,6 +11,7 @@ import logic.GameRound;
 import logic.SoundManager;
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionListener;
 
 public class GameGUI extends JFrame {
     // ▶ Attributes ─────────────────────────────────────────────────────────────────────────────────────────────
@@ -24,27 +25,31 @@ public class GameGUI extends JFrame {
     private final Player player;
     private final GameRound gameRound;
 
+    private final JLabel playerNameLabel;
+
     // ▶ Constructors ───────────────────────────────────────────────────────────────────────────────────────────
-    public GameGUI() {
-        this.player = new Player("Player1", 1000.0);
+
+    /**
+     * Initializes the Game GUI, receiving the Player instance created in Main.
+     */
+    public GameGUI(Player player) {
+        this.player = player;
         Table gameTable = new Table();
         PayoutCalculator payoutCalculator = new PayoutCalculator();
         this.gameRound = new GameRound(gameTable, payoutCalculator);
         this.board = new Board(gameTable);
 
-        // --- BACKGROUND IMAGE PATH (Assuming img.png is the final filename) ---
         final String BACKGROUND_IMAGE_PATH = "/resources/img.png";
 
         setTitle("Rainbow Roulette 2-Balls");
         setSize(1300, 950);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
-        // Uses FondoPanel as the main content container
         FondoPanel contentPanel = new FondoPanel(BACKGROUND_IMAGE_PATH);
 
-        // START AMBIENT MUSIC LOOP
         SoundManager.playAmbientLoop();
 
+        // 1. Initialize control components
         lblBalance = new JLabel("Balance: $" + String.format("%.2f", player.getBalance()));
         lblBalance.setForeground(java.awt.Color.WHITE);
         txtStakeAmount = new JTextField("100", 5);
@@ -54,48 +59,62 @@ public class GameGUI extends JFrame {
         txtResults.setEditable(false);
         btnSpin = new JButton("STAKE AND SPIN!");
 
-        updateBalance();
+        // 2. Initialize player name component
+        playerNameLabel = new JLabel("Player: " + player.getUsername());
+        playerNameLabel.setFont(new Font("Times New Roman", Font.BOLD, 20));
+        playerNameLabel.setForeground(Color.WHITE); // CAMBIO A BLANCO
 
-        // --- Setting up Layout ---
+        // 3. Setup Layout
+        JPanel pnlHeader = createHeaderPanel();
+
         JPanel pnlBoard = new JPanel(new BorderLayout());
-        pnlBoard.setOpaque(false); // Transparent to show background
+        pnlBoard.setOpaque(false);
         pnlBoard.add(board, BorderLayout.CENTER);
 
         JPanel pnlControls = createControlsPanel();
-        pnlControls.setOpaque(false); // Transparent
+        pnlControls.setOpaque(false);
 
+        contentPanel.add(pnlHeader, BorderLayout.NORTH);
         contentPanel.add(pnlBoard, BorderLayout.CENTER);
         contentPanel.add(pnlControls, BorderLayout.EAST);
 
         add(contentPanel);
         btnSpin.addActionListener(e -> processStakeAndSpin());
         setLocationRelativeTo(null);
-        setVisible(true);
     }
 
-    /** Creates the vertical panel for controls, optimized for legibility. */
+    /** Creates the top panel for displaying player info. */
+    private JPanel createHeaderPanel() {
+        JPanel headerPanel = new JPanel(new BorderLayout());
+        headerPanel.setOpaque(false);
+        headerPanel.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
+
+        playerNameLabel.setHorizontalAlignment(SwingConstants.LEFT);
+        lblBalance.setHorizontalAlignment(SwingConstants.RIGHT);
+        lblBalance.setFont(new Font("Arial", Font.BOLD, 16));
+
+        headerPanel.add(playerNameLabel, BorderLayout.WEST);
+        headerPanel.add(lblBalance, BorderLayout.EAST);
+
+        return headerPanel;
+    }
+
+    /** Creates the vertical panel for controls. */
     private JPanel createControlsPanel() {
         JPanel pnlControls = new JPanel(new BorderLayout(10, 10));
-        pnlControls.setOpaque(false); // Ensures background is visible
+        pnlControls.setOpaque(false);
         pnlControls.setBorder(BorderFactory.createEmptyBorder(20, 15, 20, 15));
 
-        // Panel for input fields
         JPanel pnlInputFields = new JPanel();
         pnlInputFields.setOpaque(false);
         pnlInputFields.setLayout(new BoxLayout(pnlInputFields, BoxLayout.Y_AXIS));
         pnlInputFields.setBorder(BorderFactory.createEmptyBorder(0, 0, 20, 0));
 
 
-        // 1. BALANCE
-        lblBalance.setFont(new Font("Arial", Font.BOLD, 14));
-        JPanel pnlBalance = createRowPanel();
-        pnlBalance.setLayout(new FlowLayout(FlowLayout.LEFT, 0, 0));
-        pnlBalance.add(lblBalance);
-        pnlInputFields.add(pnlBalance);
         pnlInputFields.add(Box.createVerticalStrut(20));
 
 
-        // 2. CONTROLS GRID (TYPE, STAKE, VALUE)
+        // Controls Grid
         JPanel pnlGrid = new JPanel(new GridLayout(3, 2, 5, 5));
         pnlGrid.setOpaque(false);
 
@@ -110,14 +129,14 @@ public class GameGUI extends JFrame {
         pnlGrid.add(txtStakeAmount);
 
         // Row 3: Value
-        pnlGrid.add(createLabel("Value (e.g., Red):", labelFont));
+        pnlGrid.add(createLabel("Value (e.g., Rojo):", labelFont));
         pnlGrid.add(txtBetValue);
 
         pnlInputFields.add(pnlGrid);
         pnlInputFields.add(Box.createVerticalStrut(20));
 
 
-        // 3. SPIN BUTTON (Right aligned)
+        // Spin Button
         JPanel pnlButton = createRowPanel();
         pnlButton.setLayout(new FlowLayout(FlowLayout.RIGHT, 0, 0));
         pnlButton.add(btnSpin);
@@ -127,7 +146,7 @@ public class GameGUI extends JFrame {
         pnlControls.add(Box.createVerticalGlue(), BorderLayout.CENTER);
 
 
-        // 4. HISTORY AND RESULTS (South)
+        // History and Results
         JPanel pnlHistory = new JPanel(new BorderLayout(0, 5));
         pnlHistory.setOpaque(false);
         JLabel lblHistory = createLabel("History and Results:", labelFont);
@@ -140,15 +159,13 @@ public class GameGUI extends JFrame {
         return pnlControls;
     }
 
-    // Auxiliary method for creating transparent rows
     private JPanel createRowPanel() {
         JPanel p = new JPanel();
-        p.setOpaque(false); // Critical: Transparent
+        p.setOpaque(false);
         p.setMaximumSize(new Dimension(Integer.MAX_VALUE, p.getPreferredSize().height));
         return p;
     }
 
-    // Auxiliary method for creating aligned labels
     private JLabel createLabel(String text, Font font) {
         JLabel label = new JLabel(text);
         label.setForeground(java.awt.Color.WHITE);
@@ -200,7 +217,6 @@ public class GameGUI extends JFrame {
                 }
                 catch (Exception e) { throw new InvalidBetTypeException(); }
 
-                // NOTE: Additional logic needed for complex stakes (STREET, DOZEN, etc.)
             default:
                 throw new InvalidBetTypeException();
         }
@@ -225,18 +241,19 @@ public class GameGUI extends JFrame {
 
             updateBalance();
 
-            // START SPIN SOUND
             SoundManager.playSpinStart();
 
             board.startSpin();
 
             Timer checkTimer = new Timer(500, null);
-            checkTimer.addActionListener(e -> {
-                if (board.isWheelStopped() && board.isBall1Stopped() && board.isBall2Stopped()) {
-                    checkTimer.stop();
-                    // STOP SPIN SOUND
-                    SoundManager.stopSpin();
-                    processSpinFinished(board.getResults());
+            checkTimer.addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(java.awt.event.ActionEvent e) {
+                    if (board.isWheelStopped() && board.isBall1Stopped() && board.isBall2Stopped()) {
+                        checkTimer.stop();
+                        SoundManager.stopSpin();
+                        processSpinFinished(board.getResults());
+                    }
                 }
             });
             checkTimer.start();
@@ -258,16 +275,13 @@ public class GameGUI extends JFrame {
             gameRound.settleBets(player, results);
 
             Bet lastBet = player.getCurrentBets().isEmpty() ? null : player.getCurrentBets().get(0);
-
-            // Get total accumulated winnings (including returned stake)
             double totalWinnings = player.getWinningsThisRound();
 
             if (lastBet != null) {
-                // Sound condition: Play WIN only if there is a net gain (total winnings > original stake).
                 if (totalWinnings > lastBet.getAmount()) {
                     SoundManager.playWin();
                 } else {
-                    SoundManager.playLose(); // Lose, draw, or just getting stake back
+                    SoundManager.playLose();
                 }
 
                 txtResults.append(generateResultMessage(lastBet, results, totalWinnings) + "\n");
@@ -285,10 +299,49 @@ public class GameGUI extends JFrame {
         }
     }
 
-    // Auxiliary methods
+    // ▶ New Public Method ──────────────────────────────────────────────────────────────────────────────────────
+
+    /** Displays input dialogs to get the player's name and handles the welcome message. */
+    public void startPlayerSession() {
+        // 1. Prompt for player name
+        String inputName = JOptionPane.showInputDialog(
+                this,
+                "Please enter your name:",
+                "Login",
+                JOptionPane.PLAIN_MESSAGE
+        );
+
+        String finalName;
+        if (inputName != null && !inputName.trim().isEmpty()) {
+            finalName = inputName.trim();
+        } else {
+            finalName = "Guest";
+        }
+
+        // 2. Set the name using the Player's setter
+        player.setUsername(finalName);
+
+        // 3. Display welcome message
+        JOptionPane.showMessageDialog(
+                this,
+                "Welcome, " + player.getUsername() ,
+                "Welcome Message",
+                JOptionPane.INFORMATION_MESSAGE
+        );
+
+        // 4. Update the name label in the GUI
+        updatePlayerNameDisplay();
+    }
+
+    // ▶ Auxiliary Methods ──────────────────────────────────────────────────────────────────────────────────────
     private void updateBalance() {
         lblBalance.setText("Balance: $" + String.format("%.2f", player.getBalance()));
     }
+
+    private void updatePlayerNameDisplay() {
+        playerNameLabel.setText("Player: " + player.getUsername());
+    }
+
     private String generateResultMessage(Bet bet, Pocket[] results, double totalWinnings) {
         double netAmount = totalWinnings - bet.getAmount();
         String msg = "Spin: " + results[0].getNumber() + " and " + results[1].getNumber() + ". ";
