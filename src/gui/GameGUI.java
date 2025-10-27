@@ -62,7 +62,7 @@ public class GameGUI extends JFrame {
         // 2. Initialize player name component
         playerNameLabel = new JLabel("Player: " + player.getUsername());
         playerNameLabel.setFont(new Font("Times New Roman", Font.BOLD, 20));
-        playerNameLabel.setForeground(Color.WHITE); // CAMBIO A BLANCO
+        playerNameLabel.setForeground(Color.WHITE);
 
         // 3. Setup Layout
         JPanel pnlHeader = createHeaderPanel();
@@ -271,22 +271,31 @@ public class GameGUI extends JFrame {
 
     /** Called when the animation stops to settle bets and display results. */
     private void processSpinFinished(Pocket[] results) {
+        // Retrieve the last bet BEFORE the game round potentially clears the list
+        Bet lastBet = player.getCurrentBets().isEmpty() ? null : player.getCurrentBets().get(0);
+
         try {
+            // Settle bets and add winnings to the player's balance
             gameRound.settleBets(player, results);
 
-            Bet lastBet = player.getCurrentBets().isEmpty() ? null : player.getCurrentBets().get(0);
-            double totalWinnings = player.getWinningsThisRound();
+            // Get total accumulated winnings (this value should reflect the result after settlement)
+            double netWinnings = player.getWinningsThisRound();
+            double betAmount = lastBet != null ? lastBet.getAmount() : 0;
 
             if (lastBet != null) {
-                if (totalWinnings > lastBet.getAmount()) {
+                // Sound condition: Play WIN only if there is a net gain.
+                if (netWinnings > 0) {
                     SoundManager.playWin();
                 } else {
                     SoundManager.playLose();
                 }
 
-                txtResults.append(generateResultMessage(lastBet, results, totalWinnings) + "\n");
+                // Append detailed result message.
+                // Note: netWinnings is passed here, but named 'roundResultAmount' in the method
+                txtResults.append(generateResultMessage(lastBet, results, netWinnings) + "\n");
             } else {
-                txtResults.append("Spin: " + results[0].getNumber() + " | " + results[1].getNumber() + ".\n");
+                // If the user spun without betting
+                txtResults.append("Spin: " + results[0].getNumber() + " | " + results[1].getNumber() + " (No Bet).\n");
                 SoundManager.playLose();
             }
 
@@ -295,6 +304,7 @@ public class GameGUI extends JFrame {
         } catch (Exception ex) {
             showMessage("Calculation Error", "Error processing results: " + ex.getMessage(), JOptionPane.ERROR_MESSAGE);
         } finally {
+            // Ensure the UI is updated and button is re-enabled
             SwingUtilities.invokeLater(() -> btnSpin.setEnabled(true));
         }
     }
@@ -324,7 +334,7 @@ public class GameGUI extends JFrame {
         // 3. Display welcome message
         JOptionPane.showMessageDialog(
                 this,
-                "Welcome, " + player.getUsername() ,
+                "Welcome, " + player.getUsername() + "!",
                 "Welcome Message",
                 JOptionPane.INFORMATION_MESSAGE
         );
@@ -342,13 +352,51 @@ public class GameGUI extends JFrame {
         playerNameLabel.setText("Player: " + player.getUsername());
     }
 
-    private String generateResultMessage(Bet bet, Pocket[] results, double totalWinnings) {
-        double netAmount = totalWinnings - bet.getAmount();
-        String msg = "Spin: " + results[0].getNumber() + " and " + results[1].getNumber() + ". ";
-        if (netAmount > 0) msg += "YOU WON! Net: $" + String.format("%.2f", netAmount) + ".";
-        else msg += "Lost $" + String.format("%.2f", bet.getAmount()) + ".";
-        return msg;
+    /** Generates a detailed result message including the spin outcome and the bet details.
+     * The logic is adjusted to define any result >= 0 as a WIN (or break-even).
+     */
+    private String generateResultMessage(Bet bet, Pocket[] results, double roundResultAmount) {
+        // Usamos un pequeño umbral (epsilon) para manejar errores de coma flotante.
+        final double EPSILON = 0.001;
+
+        // 1. Spin Outcome
+        String msg = "Spin: " + results[0].getNumber() + " | " + results[1].getNumber() + ". ";
+
+        // 2. Bet Details (Type, Value, Stake)
+        String betType = bet.getType().toString();
+
+        Object stakeObject = bet.getStake();
+        String betValue = stakeObject.toString();
+
+        if (stakeObject instanceof ColorStake || stakeObject instanceof ParityStake) {
+            betValue = betValue.substring(0, 1) + betValue.substring(1).toLowerCase();
+        }
+
+        String betDetail = String.format("[%s on %s $%.0f]",
+                betType,
+                betValue,
+                bet.getAmount()
+        );
+
+        // 3. Result (Win/Loss/Break-even)
+        String resultStatus;
+
+        // Se considera WON/Break-even si la ganancia neta es mayor o igual a cero.
+        if (roundResultAmount > EPSILON) {
+            // WIN: Ganancia neta positiva
+            resultStatus = String.format("WON! Net: $%.2f.", roundResultAmount);
+        } else if (Math.abs(roundResultAmount) <= EPSILON) {
+            // BREAK-EVEN: Ganancia neta muy cercana a cero (la apuesta fue devuelta)
+            // Esto es necesario para que el balance de 1100 (ganancia de 100) no sea clasificado aquí.
+            resultStatus = "Break-even (Stake returned).";
+        } else {
+            // LOST: Ganancia neta negativa
+            resultStatus = "LOST!";
+        }
+
+        return msg + betDetail + " " + resultStatus;
     }
+
     private void showMessage(String title, String message, int type) {
         JOptionPane.showMessageDialog(this, message, title, type);
     }
