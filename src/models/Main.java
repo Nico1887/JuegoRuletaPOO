@@ -1,6 +1,8 @@
 package models; // Or your actual root package name
 
 import gui.GameGUI;
+import gui.PreGameGUI;
+
 import javax.swing.SwingUtilities;
 
 /**
@@ -9,15 +11,12 @@ import javax.swing.SwingUtilities;
 public class Main {
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
-            // 1. Create the Player instance with a temporary name (will be replaced).
-            Player mainPlayer = new Player("Loading...");
+            // Initializes and shows the pregame window.
+            PreGameGUI launcher = new PreGameGUI();
+            launcher.setVisible(true);
 
-            // 2. Create the GUI, passing the Player instance.
-            GameGUI game = new GameGUI(mainPlayer);
-            game.setVisible(true);
-
-            // 3. Start the session to prompt the user for their name.
-            game.startPlayerSession();
+            //The logic to create a Player, GameGui and start the session
+            //was moved to PreGameGUI.startGame()
         });
     }
 }
