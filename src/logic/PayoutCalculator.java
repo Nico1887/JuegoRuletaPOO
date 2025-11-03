@@ -1,52 +1,36 @@
 package logic;
 
 import enums.generics.BetType;
-import enums.stakes.ColorStake;
-import enums.stakes.NumberStake;
-import enums.stakes.ParityStake;
-import enums.stakes.LuckyBlackStake;
-import enums.stakes.DoubleWinStake;
-import enums.stakes.StreetStake;
-import enums.stakes.DozenStake;
-import enums.stakes.ColorSequenceStake;
-
+import enums.stakes.*;
 import models.Pocket;
 import models.bets.Bet;
-import java.util.List;
 
-/**
- * Calculates the payout multiplier for any given Bet based on the spin results.
- * Uses the 'matches()' methods provided by the Stake classes.
- */
 public class PayoutCalculator {
 
-    // ▶ Constructors ───────────────────────────────────────────────────────────────────────────────────────────
     public PayoutCalculator() {
-        // Default constructor
     }
 
     /**
-     * Calculates the payout multiplier based on the Bet object and winning pockets.
-     * Multipliers are calculated as (1 + Net Gain Multiplier).
-     * @param bet The bet placed by the player.
-     * @param results The two winning pockets (r1 and r2).
-     * @return The total multiplier (e.g., 2.0 for 1:1 payout).
+     * @param bet     specific bet (type + stake + amount)
+     * @param results winning pockets [r1, r2]
+     * @return total multiplier (2.0 == 1:1; 1.0 == stake refund)
      */
     public double calculateMultiplier(Bet bet, Pocket[] results) {
         double multiplier = 0.0;
+
         final Pocket r1 = results[0];
         final Pocket r2 = results[1];
 
-        // The stake value (T)
         Object stake = bet.getStake();
 
-        // Flags for special rules
-        boolean isLuckyBlackWin = r1.getColor() == ColorStake.BLACK || r2.getColor() == ColorStake.BLACK;
+        boolean isLuckyBlackWin =
+                r1.getColor() == ColorStake.BLACK || r2.getColor() == ColorStake.BLACK;
+
         boolean betWasOnBlack = false;
 
         switch (bet.getType()) {
 
-            // Payout 35:1 -> Multiplier 36.0
+            // 35:1 -> 36.0
             case NUMBER:
                 if (stake instanceof NumberStake) {
                     NumberStake ns = (NumberStake) stake;
@@ -56,7 +40,7 @@ public class PayoutCalculator {
                 }
                 break;
 
-            // Payout 1:1 -> Multiplier 2.0
+            // 1:1 -> 2.0 (both must match in parity)
             case PARITY:
                 if (stake instanceof ParityStake) {
                     ParityStake ps = (ParityStake) stake;
@@ -66,78 +50,74 @@ public class PayoutCalculator {
                 }
                 break;
 
-            // Payout 2:1 (DOZEN) - Requires DozenStake
+            // 2:1 -> 3.0 (at least one ball in the “dozen/block”)
             case DOZEN:
                 if (stake instanceof DozenStake) {
-                    // NOTE: Assuming DozenStake has a matches method based on number
-                    // if (((DozenStake) stake).matches(r1.getNumber(), r2.getNumber())) {
-                    //     multiplier = 3.0;
-                    // }
+                    DozenStake ds = (DozenStake) stake;
+                    if (ds.matches(r1.getNumber(), r2.getNumber())) {
+                        multiplier = 3.0;
+                    }
                 }
                 break;
 
-            // Payout 1:1 (COLOR - At least one ball matches)
+            // 1:1 -> 2.0 (at least one ball of the chosen color)
             case COLOR:
                 if (stake instanceof ColorStake) {
                     ColorStake cs = (ColorStake) stake;
                     if (cs == ColorStake.BLACK) betWasOnBlack = true;
 
-                    // Uses matches() method from ColorStake enum (which checks OR condition)
                     if (cs.matches(r1.getColor(), r2.getColor())) {
                         multiplier = 2.0;
                     }
                 }
                 break;
 
-            // Payout 5:1 (SINGLE COLOR - Both balls match)
+            // 5:1 -> 6.0 (both balls of the same color)
             case SINGLE_COLOR:
                 if (stake instanceof ColorStake) {
                     ColorStake cs = (ColorStake) stake;
                     if (cs == ColorStake.BLACK) betWasOnBlack = true;
 
-                    // Requires both results to match the stake color
                     if (r1.getColor() == cs && r2.getColor() == cs) {
                         multiplier = 6.0;
                     }
                 }
                 break;
 
-            // Payout 8:1 (DOUBLE WIN - Any order)
+            // 8:1 -> 9.0 (two different colors, in any order)
             case DOUBLE_WIN:
                 if (stake instanceof DoubleWinStake) {
                     DoubleWinStake dws = (DoubleWinStake) stake;
-                    // NOTE: Assumes DoubleWinStake has a matches method based on colors
                     if (dws.matches(r1.getColor(), r2.getColor())) {
                         multiplier = 9.0;
                     }
                 }
                 break;
 
-            // Payout 12:1 (STREET)
+            // 12:1 -> 13.0 (at least one ball inside the street)
             case STREET:
                 if (stake instanceof StreetStake) {
-                    // NOTE: Assumes StreetStake has a matches method based on number
-                    // if (((StreetStake) stake).matches(r1.getNumber(), r2.getNumber())) {
-                    //     multiplier = 13.0;
-                    // }
+                    StreetStake ss = (StreetStake) stake;
+                    if (ss.matches(r1.getNumber(), r2.getNumber())) {
+                        multiplier = 13.0;
+                    }
                 }
                 break;
 
-            // Payout 15:1 (COLOR SEQUENCE - Exact order)
+            // 15:1 -> 16.0 (exact color sequence)
             case COLOR_SEQUENCE:
                 if (stake instanceof ColorSequenceStake) {
-                    // NOTE: Assumes ColorSequenceStake has a matches method based on color order
-                    // if (((ColorSequenceStake) stake).matches(r1.getColor(), r2.getColor())) {
-                    //     multiplier = 16.0;
-                    // }
+                    ColorSequenceStake css = (ColorSequenceStake) stake;
+                    if (css.matches(r1.getColor(), r2.getColor())) {
+                        multiplier = 16.0;
+                    }
                 }
                 break;
 
-            // Payout 0:1 (LUCKY BLACK - Stake returned)
+            // 0:1 -> 1.0 (refund if at least one black appears)
             case LUCKY_BLACK:
                 if (stake instanceof LuckyBlackStake) {
                     LuckyBlackStake lbs = (LuckyBlackStake) stake;
-                    // Uses matches() method from LuckyBlackStake (checks if AT LEAST one is BLACK)
                     if (lbs.matches(r1.getColor(), r2.getColor())) {
                         multiplier = 1.0;
                     }
@@ -145,15 +125,10 @@ public class PayoutCalculator {
                 break;
         }
 
-        // --- LUCKY BLACK MODIFIER RULE ---
+        // If no win, no multiplier
         if (multiplier == 0.0) return 0.0;
-
-        // Doubles the net gain if a black pocket is hit, UNLESS the bet was placed on BLACK.
-        if (isLuckyBlackWin && !betWasOnBlack) {
-            double originalNetGain = multiplier - 1.0;
-            multiplier = 1.0 + (2.0 * originalNetGain);
-        }
-
-        return multiplier;
+        return 0.0;
     }
 }
+
+        // Lucky Black as a NET WIN MODIFIER
